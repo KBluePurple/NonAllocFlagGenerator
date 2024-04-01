@@ -16,5 +16,6 @@ public enum MoveType
 }
 ```
 ```cs
-MoveType.HasFlagNonAlloc(MoveType.Custom);
+var moveType = MoveType.Custom;
+moveType.HasFlagNonAlloc(MoveType.Custom); // true
 ```
