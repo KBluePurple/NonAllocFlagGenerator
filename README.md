@@ -1,5 +1,5 @@
 # NonAllocFlagGenerator
-Simple NonAllocHasFlag Method generator for C# & Unity
+Simple HasFlagNonAlloc Method generator for C# & Unity
 
 ## Quick start
 Window > Package Manager > Add > Add package from git URL... > Put below url and press Enter  
