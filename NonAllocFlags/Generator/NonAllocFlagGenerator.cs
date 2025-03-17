@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using Microsoft.CodeAnalysis;
@@ -7,31 +8,28 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace NonAllocFlags.Generator
 {
     [Generator]
-    public class FlagExtensionsGenerator : ISourceGenerator
+    public class FlagExtensionsIncrementalGenerator : IIncrementalGenerator
     {
-        private class FlagEnumSyntaxReceiver : ISyntaxReceiver
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            public List<EnumDeclarationSyntax> CandidateEnums { get; } = new List<EnumDeclarationSyntax>();
+            var enumDeclarations = context.SyntaxProvider
+                .CreateSyntaxProvider(
+                    predicate: static (s, _) => s is EnumDeclarationSyntax,
+                    transform: static (ctx, _) => (EnumDeclarationSyntax)ctx.Node
+                )
+                .Where(enumDecl => enumDecl != null);
 
-            public void OnVisitSyntaxNode(SyntaxNode syntaxNode)
-            {
-                if (syntaxNode is EnumDeclarationSyntax enumDeclaration)
-                {
-                    CandidateEnums.Add(enumDeclaration);
-                }
-            }
+            IncrementalValueProvider<(Compilation, ImmutableArray<EnumDeclarationSyntax>)> compilationAndEnums =
+                context.CompilationProvider.Combine(enumDeclarations.Collect());
+
+            context.RegisterSourceOutput(compilationAndEnums, Execute);
         }
 
-        public void Initialize(GeneratorInitializationContext context)
+        private static void Execute(SourceProductionContext context,
+            (Compilation compilation, ImmutableArray<EnumDeclarationSyntax> enums) source)
         {
-            context.RegisterForSyntaxNotifications(() => new FlagEnumSyntaxReceiver());
-        }
-
-        public void Execute(GeneratorExecutionContext context)
-        {
-            var receiver = context.SyntaxReceiver as FlagEnumSyntaxReceiver;
-            if (receiver == null)
-                return;
+            var compilation = source.compilation;
+            var enums = source.enums;
 
             var extensionMethods = new Dictionary<string, string>
             {
@@ -49,9 +47,9 @@ namespace NonAllocFlags.Generator
 
             var processedCount = 0;
 
-            foreach (var enumDeclaration in receiver.CandidateEnums)
+            foreach (var enumDeclaration in enums)
             {
-                var model = context.Compilation.GetSemanticModel(enumDeclaration.SyntaxTree);
+                var model = compilation.GetSemanticModel(enumDeclaration.SyntaxTree);
 
                 if (!(model.GetDeclaredSymbol(enumDeclaration) is INamedTypeSymbol enumSymbol) ||
                     !IsFlagsEnum(enumSymbol) || !IsAccessible(enumSymbol))
@@ -72,7 +70,7 @@ namespace NonAllocFlags.Generator
 
             if (processedCount > 0)
             {
-                context.AddSource($"FlagExtensions.g.cs", sourceBuilder.ToString());
+                context.AddSource("FlagExtensions.g.cs", sourceBuilder.ToString());
             }
         }
 
