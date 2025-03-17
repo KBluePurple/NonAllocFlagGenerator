@@ -7,6 +7,17 @@ An efficient solution for flag checking in C# and Unity
 - Easy to use
 
 ## Installation
+
+### NuGet
+1. Open the NuGet Package Manager in your IDE (e.g., Visual Studio)
+2. Search for `NonAllocFlagGenerator` in the NuGet Gallery
+3. Install the package  
+---
+1. Open the terminal in your IDE
+2. Run the following command to install the package:  
+   `dotnet add package NonAllocFlagGenerator --version 1.3.1`
+
+### Unity Package Manager
 1. Open the Package Manager in Unity (Window > Package Manager)
 2. Add the NonAllocFlagGenerator package using the following Git URL:  
   `https://github.com/KBluePurple/NonAllocFlagGenerator.git?path=/Plugins#master`
