@@ -64,3 +64,13 @@ if (currentState.HasFlagNonAlloc(PlayerState.Walking))
 
 With NonAllocFlagGenerator, you can easily check flags while writing readable code without compromising performance.
 Apply NonAllocFlagGenerator to your project today and experience efficient flag checking!
+
+## Star History
+
+<a href="https://www.star-history.com/#KBluePurple/NonAllocFlagGenerator&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=KBluePurple/NonAllocFlagGenerator&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=KBluePurple/NonAllocFlagGenerator&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=KBluePurple/NonAllocFlagGenerator&type=Date" />
+ </picture>
+</a>
