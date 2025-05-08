@@ -1,6 +1,6 @@
 {
   "name": "kbluepurple.unity.nonallocflaggenerator",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "displayName": "NonAllocFlagGenerator",
   "description": "A Unity Source Generator that generates a flag enum for non-allocating methods.",
   "documentationUrl": "https://github.com/KBluePurple/NonAllocFlagGenerator",
