@@ -5,7 +5,7 @@
         <LangVersion>9.0</LangVersion>
         <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
         <PackageId>NonAllocFlagGenerator</PackageId>
-        <Version>1.4.0</Version>
+        <Version>1.4.1</Version>
         <Authors>AchromaticDev</Authors>
         <Description>An efficient solution for flag checking in C# without boxing</Description>
         <PackageTags>csharp;unity;performance;enum;flags</PackageTags>
