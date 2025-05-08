@@ -39,19 +39,20 @@ namespace NonAllocFlags.Generator
 
         private static bool IsEnumInOpenGenericContext(INamedTypeSymbol enumSymbol)
         {
-            var containingType = enumSymbol.ContainingType;
+            INamedTypeSymbol? containingType = enumSymbol.ContainingType;
             while (containingType != null)
             {
                 if (containingType.IsGenericType)
                 {
                     foreach (var typeArgument in containingType.TypeArguments)
                     {
-                        if (typeArgument is not ITypeParameterSymbol typeParamSymbolArg) continue;
-
-                        if (containingType.TypeParameters.Contains(typeParamSymbolArg,
-                                SymbolEqualityComparer.Default))
+                        if (typeArgument is ITypeParameterSymbol typeParamSymbolArg)
                         {
-                            return true;
+                            if (containingType.TypeParameters.Contains(typeParamSymbolArg,
+                                    SymbolEqualityComparer.Default))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -103,21 +104,49 @@ namespace NonAllocFlags.Generator
                 if (!IsFlagsEnum(enumSymbol))
                     continue;
 
-                var accessibility = GetEffectiveAccessibility(enumSymbol);
-                if (accessibility != Accessibility.Public && accessibility != Accessibility.Internal)
-                    continue;
-
+                // Skip enums in open generic contexts to prevent CS0246
                 if (IsEnumInOpenGenericContext(enumSymbol))
                 {
+                    // Optional: Report diagnostic
                     continue;
                 }
 
+                // Determine the true effective accessibility of the enum symbol
+                var effectiveAccessibilityOfEnum = GetEffectiveAccessibility(enumSymbol);
+
+                string extensionMethodModifier;
+
+                // Decide if the enum is accessible enough to generate methods for it,
+                // and determine the modifier for the extension method.
+                switch (effectiveAccessibilityOfEnum)
+                {
+                    case Accessibility.Public:
+                        extensionMethodModifier = "public";
+                        break;
+                    case Accessibility.Internal: // C# internal
+                    case Accessibility.ProtectedOrInternal: // C# protected internal
+                        // Both 'internal' and 'protected internal' enums are accessible
+                        // by an 'internal' extension method in the same assembly.
+                        extensionMethodModifier = "internal";
+                        break;
+
+                    // These effective accessibilities mean the enum type cannot be legally
+                    // named as a parameter by FlagExtensionsGenerated (a separate top-level class).
+                    case Accessibility.Private:
+                    case Accessibility.Protected: // C# protected
+                    case Accessibility.ProtectedAndInternal: // C# private protected
+                    case Accessibility.NotApplicable:
+                    default:
+                        // Optional: Report diagnostic for skipping due to accessibility
+                        continue; // Skip this enum
+                }
+
                 var enumPath = enumSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                var accessModifier = accessibility == Accessibility.Public ? "public" : "internal";
 
                 foreach (var method in extensionMethods)
                 {
-                    AddExtensionMethod(sourceBuilder, accessModifier, enumPath, method.Name, method.Param, method.Impl);
+                    AddExtensionMethod(sourceBuilder, extensionMethodModifier, enumPath, method.Name, method.Param,
+                        method.Impl);
                 }
 
                 processedCount++;
@@ -139,33 +168,27 @@ namespace NonAllocFlags.Generator
                        ad.AttributeClass.Name == "FlagsAttribute");
         }
 
+        // This method now returns the true effective accessibility of the symbol,
+        // considering its own declared accessibility and that of its containers.
         private static Accessibility GetEffectiveAccessibility(ISymbol symbol)
         {
-            var currentAccessibility = symbol.DeclaredAccessibility;
+            var mostRestrictiveAccessibility = symbol.DeclaredAccessibility;
             var container = symbol.ContainingSymbol;
 
             while (container != null && container is not INamespaceSymbol)
             {
-                if (container.DeclaredAccessibility < currentAccessibility)
+                // Accessibility enum values are ordered such that numerically smaller is more restrictive.
+                // Private = 1, ProtectedAndInternal = 2, Protected = 3, Internal = 4, ProtectedOrInternal = 5, Public = 6
+                if (container.DeclaredAccessibility < mostRestrictiveAccessibility)
                 {
-                    currentAccessibility = container.DeclaredAccessibility;
+                    mostRestrictiveAccessibility = container.DeclaredAccessibility;
                 }
 
                 container = container.ContainingSymbol;
             }
 
-            return currentAccessibility switch
-            {
-                Accessibility.Private => Accessibility.Private,
-                Accessibility.ProtectedAndInternal => Accessibility.Internal,
-                Accessibility.Protected => Accessibility.Internal,
-                Accessibility.Internal => Accessibility.Internal,
-                Accessibility.ProtectedOrInternal => Accessibility.Internal,
-                Accessibility.Public => Accessibility.Public,
-                _ => Accessibility.NotApplicable
-            };
+            return mostRestrictiveAccessibility;
         }
-
 
         private static void AddExtensionMethod(
             StringBuilder builder,
