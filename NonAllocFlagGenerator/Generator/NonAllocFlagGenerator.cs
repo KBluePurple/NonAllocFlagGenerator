@@ -11,7 +11,7 @@ namespace NonAllocFlags.Generator
     [Generator]
     public class FlagExtensionsIncrementalGenerator : IIncrementalGenerator
     {
-        private const string FullAttributeName = "NonAllocFlags.Generator.NonAllocFlagGeneratorAttribute";
+        private const string FullAttributeName = "NonAllocFlag.NonAllocFlagGeneratorAttribute";
 
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
