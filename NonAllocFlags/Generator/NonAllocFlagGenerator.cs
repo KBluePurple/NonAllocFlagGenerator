@@ -37,6 +37,30 @@ namespace NonAllocFlags.Generator
                 : null;
         }
 
+        private static bool IsEnumInOpenGenericContext(INamedTypeSymbol enumSymbol)
+        {
+            var containingType = enumSymbol.ContainingType;
+            while (containingType != null)
+            {
+                if (containingType.IsGenericType)
+                {
+                    foreach (var typeArgument in containingType.TypeArguments)
+                    {
+                        if (typeArgument is not ITypeParameterSymbol typeParamSymbolArg) continue;
+
+                        if (containingType.TypeParameters.Contains(typeParamSymbolArg,
+                                SymbolEqualityComparer.Default))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                containingType = containingType.ContainingType;
+            }
+
+            return false;
+        }
 
         private static void Execute(SourceProductionContext context,
             (Compilation compilation, ImmutableArray<EnumDeclarationSyntax> enums) source)
@@ -51,7 +75,7 @@ namespace NonAllocFlags.Generator
             var extensionMethods = new[]
             {
                 (Name: "HasFlagNonAlloc", Param: "flag", Impl: "return (value & flag) == flag;"),
-                (Name: "HasAnyFlag", Param: "flags", Impl: "return (value & flags) != 0;")
+                (Name: "HasAnyFlag", Param: "flags", Impl: "return (value & flags)!= 0;")
             };
 
             var sourceBuilder = new StringBuilder();
@@ -61,7 +85,7 @@ namespace NonAllocFlags.Generator
             sourceBuilder.AppendLine("using System.Runtime.CompilerServices;");
             sourceBuilder.AppendLine();
             sourceBuilder.AppendLine(
-                "[System.CodeDom.Compiler.GeneratedCodeAttribute(\"NonAllocFlags.Generator\", \"1.0.0.0\")]");
+                "");
             sourceBuilder.AppendLine("public static class FlagExtensionsGenerated");
             sourceBuilder.AppendLine("{");
 
@@ -82,6 +106,11 @@ namespace NonAllocFlags.Generator
                 var accessibility = GetEffectiveAccessibility(enumSymbol);
                 if (accessibility != Accessibility.Public && accessibility != Accessibility.Internal)
                     continue;
+
+                if (IsEnumInOpenGenericContext(enumSymbol))
+                {
+                    continue;
+                }
 
                 var enumPath = enumSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
                 var accessModifier = accessibility == Accessibility.Public ? "public" : "internal";
