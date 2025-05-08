@@ -11,14 +11,8 @@ namespace NonAllocFlags.Generator
     [Generator]
     public class FlagExtensionsIncrementalGenerator : IIncrementalGenerator
     {
-        private const string FullAttributeName = "NonAllocFlag.NonAllocFlagGeneratorAttribute";
-
         public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            var assemblyHasAttributeProvider = context.CompilationProvider.Select((compilation, _) =>
-                compilation.Assembly.GetAttributes()
-                    .Any(attr => attr.AttributeClass?.ToDisplayString() == FullAttributeName));
-
             var enumDeclarations = context.SyntaxProvider
                 .CreateSyntaxProvider(
                     predicate: static (s, _) => s is EnumDeclarationSyntax,
@@ -30,19 +24,7 @@ namespace NonAllocFlags.Generator
             IncrementalValueProvider<(Compilation, ImmutableArray<EnumDeclarationSyntax>)> compilationAndEnums =
                 context.CompilationProvider.Combine(enumDeclarations)!;
 
-            var combinedProvider = compilationAndEnums.Combine(assemblyHasAttributeProvider);
-
-            context.RegisterSourceOutput(combinedProvider, (spc, source) =>
-            {
-                var ((compilation, enums), hasAttribute) = source;
-
-                if (!hasAttribute)
-                {
-                    return;
-                }
-
-                Execute(spc, (compilation, enums));
-            });
+            context.RegisterSourceOutput(compilationAndEnums, Execute);
         }
 
         private static EnumDeclarationSyntax? GetEnumDeclarationForSourceGen(GeneratorSyntaxContext context)
@@ -54,6 +36,7 @@ namespace NonAllocFlags.Generator
                 ? enumDeclaration
                 : null;
         }
+
 
         private static void Execute(SourceProductionContext context,
             (Compilation compilation, ImmutableArray<EnumDeclarationSyntax> enums) source)
