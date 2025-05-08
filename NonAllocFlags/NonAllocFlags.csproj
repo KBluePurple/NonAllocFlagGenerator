@@ -2,22 +2,11 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
-        <LangVersion>9.0</LangVersion>
-        <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-        <PackageId>NonAllocFlagGenerator</PackageId>
-        <Version>1.4.0</Version>
-        <Authors>AchromaticDev</Authors>
-        <Description>An efficient solution for flag checking in C# without boxing</Description>
-        <PackageTags>csharp;unity;performance;enum;flags</PackageTags>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/KBluePurple/NonAllocFlagGenerator</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/KBluePurple/NonAllocFlagGenerator</RepositoryUrl>
-        <IncludeBuildOutput>false</IncludeBuildOutput>
-        <DevelopmentDependency>true</DevelopmentDependency>
-        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
-        <IncludeSymbols>false</IncludeSymbols>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <LangVersion>9</LangVersion>
+        <Nullable>enable</Nullable>
+        <RootNamespace>NonAllocFlag</RootNamespace>
     </PropertyGroup>
+
 
     <Target Name="CopyDllToPlugins" AfterTargets="Build">
         <Copy
@@ -26,14 +15,4 @@
                 SkipUnchangedFiles="true"
                 Condition="Exists('$(OutputPath)$(AssemblyName).dll')"/>
     </Target>
-
-    <ItemGroup>
-        <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" PrivateAssets="all"/>
-        <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" PrivateAssets="all"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <None Include="../README.md" Pack="true" PackagePath="\"/>
-        <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
-    </ItemGroup>
 </Project>

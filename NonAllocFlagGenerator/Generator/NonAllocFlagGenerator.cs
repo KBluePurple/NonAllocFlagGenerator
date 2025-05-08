@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -9,11 +8,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NonAllocFlags.Generator
 {
-    [AttributeUsage(AttributeTargets.Assembly)]
-    public class NonAllocFlagGeneratorAttribute : Attribute
-    {
-    }
-
     [Generator]
     public class FlagExtensionsIncrementalGenerator : IIncrementalGenerator
     {
