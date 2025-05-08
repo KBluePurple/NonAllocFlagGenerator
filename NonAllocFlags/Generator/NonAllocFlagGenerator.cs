@@ -98,7 +98,7 @@ namespace NonAllocFlags.Generator
 
             if (processedCount > 0)
             {
-                context.AddSource("FlagExtensions.g.cs", sourceBuilder.ToString());
+                context.AddSource($"{source.compilation.AssemblyName}.FlagExtensions.g.cs", sourceBuilder.ToString());
             }
         }
 
